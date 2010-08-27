@@ -3,7 +3,7 @@ module Celerity
     include Container
     include XpathSupport
 
-    attr_accessor :page, :object, :charset
+    attr_accessor :page, :object, :charset, :headers
     attr_reader :webclient, :viewer, :options
 
     #
@@ -67,6 +67,7 @@ module Celerity
 
       @render_type   = opts.delete(:render)    || :html
       @charset       = opts.delete(:charset)   || "UTF-8"
+      @headers        = {}
       @page           = nil
       @error_checkers = []
       @browser        = self # for Container#browser
@@ -92,9 +93,16 @@ module Celerity
 
     def goto(uri)
       uri = "http://#{uri}" unless uri =~ %r{://}
+      
+      puts "uri: #{uri}"
 
       request = HtmlUnit::WebRequestSettings.new(::Java::JavaNet::URL.new(uri))
       request.setCharset(@charset)
+      
+      self.headers.each_pair do |name,value|
+        puts "#{name}: #{value}"
+        request.setAdditionalHeader(name,value)  
+      end
 
       rescue_status_code_exception do
         self.page = @webclient.getPage(request)
